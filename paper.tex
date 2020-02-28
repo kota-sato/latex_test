@@ -1,1 +1,129 @@
-Hello World!
+\documentclass[twocolumn]{jarticle}
+\title{誤差逆伝播法}
+\author{迫田真太郎}
+\date{\today}
+\setlength{\topmargin}{-2cm}
+\setlength{\textheight}{250mm}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsmath, amssymb, bm}
+
+%表のテンプレ
+%\begin{table}[!htbp]
+%  \begin{center}
+%    \caption{}
+%    \begin{tabular}{ccc} \hline
+%    \end{tabular}
+%    \label{tab:}
+%  \end{center}
+%\end{table}
+
+%図のテンプレ
+%\begin{figure}[!htbp]
+%  \begin{center}
+%    \includegraphics[width=14cm]{パス}
+%    \caption{}
+%    \label{fig:}
+%  \end{center}
+%\end{figure}
+
+\begin{document}
+\maketitle
+
+\section{パーセプトロンの学習則とデルタ則}
+ニューラルネットの起源は{\bf 人工ニューロン}であった.これは活性化関数が階段関数であり,入出力値が0,1の2値であるニューラルネットの一例であるとみなせる.信号が離散値であるため勾配が取れない.従ってパーセプトロンでは専用の学習則がいくつか提案されている.
+
+中でも代表的なものは1958年にローゼンブラットが提唱したものである.今,中間層なしの古典パーセプトロンで出力ユニットが1つであるものを考えることとする.
+
+一つの訓練サンプル$\{\bm{x}, y\}$について,入力$\bm{x}$に対してパーセプトロンの出力が$\hat{y}(\bm{x})$であったとき,出力が間違っているパターンは次の2通りになる.
+
+\begin{enumerate}
+  \item 目標出力が$y = 1$であったのに実際の出力が$\hat{y}(\bm{x}) = 0$であった場合\\
+出力層にやってくるシグナルの量が足りなかったということなので,発火したユニットとの結合パラメータを大きくすればよい.したがってパラメータの更新式は$\eta$を学習率として
+\begin{equation}
+   w_i \longleftarrow w_i + \eta x_i
+\end{equation}
+となる. $x_i = 0$となるような$i$については$w_i$は不変である.
+
+  \item 目標出力が$y = 0$であったのに実際の出力が$\hat{y}(\bm{x}) = 1$であった場合\\
+出力層にやってくるシグナルが強すぎたということなので,発火したユニットとの結合パラメータを小さくすればよい.したがって
+\begin{equation}
+   w_i \longleftarrow w_i - \eta x_i
+\end{equation}
+\end{enumerate}
+これらの更新式は次のようにまとめることができる.
+\begin{equation}
+   w_i \longleftarrow w_i - \eta (\hat{y}(\bm{x}) - y) x_i
+\end{equation}
+これを{\bf パーセプトロンの学習則}といい,線形分離可能な問題に対しては訓練データを十分に与えることでパラメータが有限回で最適値に収束していくことが証明されている.
+
+\subsection*{パラメータが有限回の更新で最適値に収束することの証明}
+考えているパーセプトロンは$\hat{y}(\bm{x}) = \mathrm{sgn}({\bm{w}^t\bm{x}})$として与えられる.$\bm{w}^t\bm{x}$の符号を見ているだけなので$\bm{w}$をすべて正の定数倍しても出力は変わらない.線形分離可能な訓練データ$\{\bm{x}_1, y_1\}, \{\bm{x}_2, y_2\}, \dots, \{\bm{x}_N, y_N\}$について,簡単のため$y_i < 0$であるものはすべて$\bm{x}_i = -\bm{x}_i$, $y_i = -y_i$と変換しておくこととする.訓練データを繰り返し学習していく中で,誤識別された学習パターンを重複を許して順番に並べて$\bm{x}_1, \bm{x}_2, \dots, \bm{x}_k, \dots$とする.重みパラメータの初期値を0とした場合,正の定数倍に対しての不変性から学習率はどのようにとっても変わらないため1として, $k$回目の誤認識をもとにパラメータを$\bm{w}^k \to \bm{w}^{k + 1}$へと更新する式は
+\begin{equation}
+  \bm{w}^{k + 1} = \bm{w}^k + \bm{x}^k
+  \label{eq:update}
+\end{equation}
+である.ここで解となる重みベクトルの一つを$\hat{\bm{w}}$とすると
+\begin{equation}
+  \hat{\bm{w}}^t\bm{x}_i > 0 \qquad (i = 1, 2, \dots, N)
+\end{equation}
+であり,式(\ref{eq:update})の両辺からこれを引くと
+\begin{equation}
+  (\bm{w}^{k + 1} - \hat{\bm{w}}) = (\bm{w}^{k} - \hat{\bm{w}}) + \bm{x}^k
+\end{equation}
+であり,両辺を自乗して
+\begin{eqnarray}
+  (\bm{w}^{k + 1} - \hat{\bm{w}})^2 &=& ((\bm{w}^{k} - \hat{\bm{w}}) + \bm{x}^k)^2 \\
+  &=& (\bm{w}^{k} - \hat{\bm{w}})^2 \nonumber \\
+   &&+ 2(\bm{w}^{k} - \hat{\bm{w}})^t \bm{x}^k + (\bm{x}^k)^2 \\
+  &=&  (\bm{w}^{k} - \hat{\bm{w}})^2 + 2(\bm{w}^k)^t\bm{x}^k \nonumber \\
+   &&  - 2 \hat{\bm{w}}^k\bm{x}^k + (\bm{x}^k)^2
+\label{eq:gef}
+\end{eqnarray}
+となる.$\bm{x}^k$は誤認識されたパターンなので$(\bm{w}^k)^t\bm{x}^k \le 0$が成り立ち,従って式(\ref{eq:gef})は
+\begin{equation}
+  (\bm{w}^{k + 1} - \hat{\bm{w}})^2 \le (\bm{w}^{k} - \hat{\bm{w}})^2 - 2 \hat{\bm{w}}^k\bm{x}^k + (\bm{x}^k)^2
+\end{equation}
+ここで$\hat{\bm{w}}$の正の定数倍は同じく解であることを利用すると正の定数$\alpha$を用いて$\hat{\bm{w}} \to \alpha \hat{\bm{w}}$と書き換られ
+\begin{equation}
+  (\bm{w}^{k + 1} - \alpha \hat{\bm{w}})^2 \le (\bm{w}^{k} - \alpha \hat{\bm{w}})^2 - 2 \alpha \hat{\bm{w}}^k\bm{x}^k + (\bm{x}^k)^2
+\end{equation}
+となる.不等式の条件を変化させないよう定数$\beta, \gamma$を
+\begin{eqnarray}
+  \beta &\overset{\mathrm{def}}{=}& \max_{p = 1, \dots, n} (\bm{x}_p)^2 \\
+  \gamma &\overset{\mathrm{def}}{=}& \min_{p = 1, \dots, n} \hat{\bm{w}}^t \bm{x}_p > 0
+\end{eqnarray}
+と定義する.すると
+\begin{equation}
+  (\bm{w}^{k + 1} - \alpha \hat{\bm{w}})^2 \le (\bm{w}^{k} - \alpha \hat{\bm{w}})^2 - 2 \alpha \gamma + \beta
+\end{equation}
+であり, $\alpha = \frac{\beta}{\gamma}$とし添え字$k$順番にずらしていくと
+\begin{eqnarray}
+  (\bm{w}^{k + 1} - \alpha \hat{\bm{w}})^2 &\le& (\bm{w}^{k} - \alpha \hat{\bm{w}})^2 - \beta \\
+  &\le& (\bm{w}^{k - 1} - \alpha \hat{\bm{w}})^2 - 2 \beta \\
+　&& \cdots \nonumber \\
+  &\le& (\bm{w}^{1} - \alpha \hat{\bm{w}})^2 - k \beta
+\end{eqnarray}
+という不等式が成り立つ.この左辺は0以上なので
+\begin{equation}
+  0 \le  (\bm{w}^{1} - \alpha \hat{\bm{w}})^2 - k \beta
+\end{equation}
+よって
+\begin{equation}
+  k \le \frac{(\bm{w}^{1} - \alpha \hat{\bm{w}})^2 }{\beta}
+\end{equation}
+$k$が定数で上から抑えられるため有限回で収束することが示された.
+
+\section{誤差逆伝播法とは}
+\section{デルタの意味}
+\section{誤差逆伝播法の利点}
+\section{勾配消失,勾配爆発問題}
+\subsection{勾配消失,勾配爆発問題とは}
+\subsection{勾配消失への対策}
+\subsubsection{事前学習}
+\subsubsection{活性化関数の工夫}
+
+\begin{thebibliography}{9}
+  \bibitem{教科書} 瀧雅人. これならわかる深層学習入門. p114-131
+  \bibitem{鍋谷} 鍋谷昴一. 単純パーセプトロンの収束定理と限界. http://starpentagon.net/analytics/simple\_perceptron/
+\end{thebibliography}
+\end{document}
